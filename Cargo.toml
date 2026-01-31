@@ -1,0 +1,7 @@
+[workspace]
+name = "jetstream"
+version = "0.1.0"
+edition = "2024"
+
+members = ["services/stream-gateway","services/stream-producer"]
+resolver = "3"
