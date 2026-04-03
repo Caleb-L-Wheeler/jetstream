@@ -12,3 +12,12 @@ services:
 
     volumes:
       - ./db_volume:/var/lib/postgresql
+      
+  broker:
+    build:
+      context: .
+      dockerfile: Dockerfile/kafka.Dockerfile
+    
+    ports:
+      - 9092:9092
+
