@@ -1,38 +1,40 @@
-extern crate inotify;
+use std::time::Duration;
 
-use inotify::{Inotify, WatchMask};
-use std::process::Command;
+use rdkafka::config::ClientConfig;
+use rdkafka::message::{Header, OwnedHeaders};
+use rdkafka::producer::{FutureProducer, FutureRecord};
+// use rdkafka::util::get_rdkafka_version;
 
-fn decode() {
-    // safest + simplest: call touch directly
-    Command::new("touch")
-        .arg("/tmp/hi.txt")
-        .status()
-        .expect("failed to execute touch");
+async fn produce(brokers: &str, topic_name: &str) {
+    let producer: &FutureProducer = &ClientConfig::new()
+        .set("bootstrap.servers", brokers)
+        .set("message.timeout.ms", "5000")
+        .create()
+        .expect("Producer creation error");
+
+    let _ = (0..5)
+        .map(|i| async move {
+            let delivery_status = producer
+                .send(
+                    FutureRecord::to(topic_name)
+                        .payload(&format!("Message {}", i))
+                        .key(&format!("Key {}", i))
+                        .headers(OwnedHeaders::new().insert(Header {
+                            key: "header_key",
+                            value: Some("header_value"),
+                        })),
+                    Duration::from_secs(0),
+                )
+                .await;
+            delivery_status
+        })
+        .collect::<Vec<_>>();
 }
 
-fn main() {
-    let mut inotify = Inotify::init().expect("Error while initializing inotify service");
+#[tokio::main]
+async fn main() {
+    let brokers = "localhost:9092";
+    let topic = "stream.lifecycle.v1";
 
-    inotify
-        .watches()
-        .add("/tmp", WatchMask::CREATE | WatchMask::ATTRIB | WatchMask::MODIFY)
-        .expect("Failed to add file watch");
-
-    // Ensure we actually cause a CREATE at least once
-    let _ = std::fs::remove_file("/tmp/hi.txt");
-
-    println!("about to create...");
-    decode();
-
-    let mut buffer = [0u8; 4096];
-    let events = inotify
-        .read_events_blocking(&mut buffer)
-        .expect("Error while reading events");
-
-    println!("Unblocked");
-
-    for event in events {
-        println!("event: {:?}", event.mask);
-    }
+    produce(brokers, topic).await;
 }
