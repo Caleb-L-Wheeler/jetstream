@@ -3,5 +3,9 @@ name = "jetstream"
 version = "0.1.0"
 edition = "2024"
 
-members = ["services/stream-gateway","services/stream-producer"]
+members = [
+    "services/stream-gateway",
+    "services/stream-producer",
+    "services/stream-consumer"
+]
 resolver = "3"

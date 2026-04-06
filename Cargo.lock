@@ -663,6 +663,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "stream-consumer"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "env_logger",
+ "log",
+ "rdkafka",
+ "tokio",
+]
+
+[[package]]
 name = "stream-gateway"
 version = "0.1.0"
 dependencies = [
